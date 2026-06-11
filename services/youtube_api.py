@@ -16,11 +16,34 @@ load_dotenv()
 
 
 def get_api_key():
+    """Return YouTube API key.
+
+    Priority order:
+    1. Streamlit secrets: `st.secrets["YOUTUBE_API_KEY"]` (recommended on Streamlit Cloud)
+    2. Environment variable `YOUTUBE_API_KEY` (useful for local dev or CI)
+    3. `.env` file via `load_dotenv()` (local development only)
+
+    Do NOT commit API keys into source control. Add the key in Streamlit Cloud
+    as a secret named `YOUTUBE_API_KEY`.
+    """
+    # 1) Streamlit-managed secrets (Streamlit Cloud)
+    try:
+        secret_key = st.secrets.get("YOUTUBE_API_KEY") if hasattr(st, "secrets") else None
+    except Exception:
+        secret_key = None
+
+    if secret_key:
+        return secret_key
+
+    # 2) Environment variable / .env
     key = os.getenv("YOUTUBE_API_KEY")
-    if not key:
-        st.error("❌ YouTube API key not found. Please add YOUTUBE_API_KEY to your .env file.")
-        st.stop()
-    return key
+    if key:
+        return key
+
+    # Not found — show user-friendly error in the app
+    st.error("❌ YouTube API key not found. Add `YOUTUBE_API_KEY` to Streamlit Secrets or your environment.")
+    st.stop()
+    return None
 
 
 @st.cache_resource(show_spinner=False)
